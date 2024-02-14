@@ -42,7 +42,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+void TIM2_IRQHandler(void);
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -62,40 +62,35 @@ void SystemClock_Config(void);
   */
 int main(void)
 {
-  /* USER CODE BEGIN 1 */
 
-  /* USER CODE END 1 */
-
-  /* MCU Configuration--------------------------------------------------------*/
-
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
-
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
+	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
+	RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
   SystemClock_Config();
 
-  /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
-  /* USER CODE BEGIN 2 */
-
-  /* USER CODE END 2 */
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
+	GPIOC->MODER |= (1<<12) | (1<<14) | (1<<16) | (1<<18);
+	GPIOC->MODER &= ~((1<<13) | (1<<15) | (1<<17) | (1<<19));
+	GPIOC->OTYPER &= ~((1<<6) | (1<<7) | (1<<8) | (1<<9));
+	GPIOC->OSPEEDR &= ~((1<<12) | (1<<14) | (1<<16) | (1<<18));
+	GPIOC->PUPDR &= ~((1<<12) | (1<<14) | (1<<16) | (1<<18)
+									| (1<<13) | (1<<15) | (1<<17) | (1<<19));
+	
+  TIM2->PSC = 7999;
+	TIM2->ARR = 250;
+	TIM2->DIER |= (1<<0);
+	TIM2->CR2 |= (1<<4);
+	TIM2->CR1 |= (1<<0);
+	
+	NVIC_EnableIRQ(15);
+	NVIC_SetPriority(15,1);
+	
+	GPIOC->ODR |= (1<<8);
+	GPIOC->ODR &= ~(1<<9);
+	
   while (1)
   {
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
+    
   }
-  /* USER CODE END 3 */
+ 
 }
 
 /**
@@ -134,7 +129,14 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+void TIM2_IRQHandler(void)
+{
+	// toggle the leds
+	GPIOC->ODR ^= (1<<8);
+	GPIOC->ODR ^= (1<<9);
+	
+	TIM2->SR &= ~(1<<0);
+}
 /* USER CODE END 4 */
 
 /**
@@ -168,3 +170,4 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+
