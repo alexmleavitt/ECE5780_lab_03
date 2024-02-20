@@ -64,15 +64,18 @@ int main(void)
 {
 
 	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
+	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
 	RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
   SystemClock_Config();
 
-	GPIOC->MODER |= (1<<12) | (1<<14) | (1<<16) | (1<<18);
-	GPIOC->MODER &= ~((1<<13) | (1<<15) | (1<<17) | (1<<19));
+	GPIOC->MODER |= (1<<16) | (1<<18) | (1<<13) | (1<<15);
+	GPIOC->MODER &= ~((1<<17) | (1<<19) | (1<<12) | (1<<14));
 	GPIOC->OTYPER &= ~((1<<6) | (1<<7) | (1<<8) | (1<<9));
 	GPIOC->OSPEEDR &= ~((1<<12) | (1<<14) | (1<<16) | (1<<18));
 	GPIOC->PUPDR &= ~((1<<12) | (1<<14) | (1<<16) | (1<<18)
 									| (1<<13) | (1<<15) | (1<<17) | (1<<19));
+	GPIOC->AFR[0] &= ~((1<<24) | (1<<25) | (1<<26) | (1<<27)
+									| (1<<28) | (1<<29) | (1<<30) | (1<<31));
 	
   TIM2->PSC = 7999;
 	TIM2->ARR = 250;
@@ -80,11 +83,24 @@ int main(void)
 	TIM2->CR2 |= (1<<4);
 	TIM2->CR1 |= (1<<0);
 	
+	TIM3->PSC = 999;//1999;
+	TIM3->ARR = 10;//5;
+	TIM3->CCMR1 &= ~((1<<0) | (1<<1) | (1<<8) | (1<<9));
+	TIM3->CCMR1 |= (1<<4) | (1<<5) | (1<<6);
+	TIM3->CCMR1 |= (1<<14) | (1<<13);
+	TIM3->CCMR1 &= ~(1<<12);
+	TIM3->CCMR1 |= (1<<3) | (1<<11);
+	TIM3->CCER |= (1<<0) | (1<<4);
+	TIM3->CCR1 = 5;
+	TIM3->CCR2 = 5;
+	
 	NVIC_EnableIRQ(15);
 	NVIC_SetPriority(15,1);
 	
 	GPIOC->ODR |= (1<<8);
 	GPIOC->ODR &= ~(1<<9);
+	GPIOC->ODR &= ~(1<<6);
+	GPIOC->ODR |= (1<<7);
 	
   while (1)
   {
@@ -170,4 +186,5 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+
 
