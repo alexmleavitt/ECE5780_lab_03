@@ -63,13 +63,15 @@ void SystemClock_Config(void);
 int main(void)
 {
 
+	// Set up the clock
 	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
 	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
 	RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
   SystemClock_Config();
 
+	// Configure the LEDs
 	GPIOC->MODER |= (1<<16) | (1<<18) | (1<<13) | (1<<15);
-	GPIOC->MODER &= ~((1<<17) | (1<<19) | (1<<12) | (1<<14));
+	GPIOC->MODER &= ~((1<<17) | (1<<19) | (1<<12) | (1<<14)); // red and blue are in alternative function mode
 	GPIOC->OTYPER &= ~((1<<6) | (1<<7) | (1<<8) | (1<<9));
 	GPIOC->OSPEEDR &= ~((1<<12) | (1<<14) | (1<<16) | (1<<18));
 	GPIOC->PUPDR &= ~((1<<12) | (1<<14) | (1<<16) | (1<<18)
@@ -77,30 +79,36 @@ int main(void)
 	GPIOC->AFR[0] &= ~((1<<24) | (1<<25) | (1<<26) | (1<<27)
 									| (1<<28) | (1<<29) | (1<<30) | (1<<31));
 	
-  TIM2->PSC = 7999;
-	TIM2->ARR = 250;
-	TIM2->DIER |= (1<<0);
-	TIM2->CR2 |= (1<<4);
-	TIM2->CR1 |= (1<<0);
 	
-	TIM3->PSC = 999;//1999;
-	TIM3->ARR = 10;//5;
+	// Set up the timer to trigger a UEV interrupt
+//  TIM2->PSC = 7999;
+//	TIM2->ARR = 250;
+//	TIM2->DIER |= (1<<0);
+//	TIM2->CR2 |= (1<<4);
+//	TIM2->CR1 |= (1<<0);
+	
+	// Set up the timer to trigger the LEDs based on the Capture/Compare register
+	TIM3->PSC = 99;//999;
+	TIM3->ARR = 100;//10;
 	TIM3->CCMR1 &= ~((1<<0) | (1<<1) | (1<<8) | (1<<9));
 	TIM3->CCMR1 |= (1<<4) | (1<<5) | (1<<6);
 	TIM3->CCMR1 |= (1<<14) | (1<<13);
 	TIM3->CCMR1 &= ~(1<<12);
 	TIM3->CCMR1 |= (1<<3) | (1<<11);
 	TIM3->CCER |= (1<<0) | (1<<4);
-	TIM3->CCR1 = 5;
-	TIM3->CCR2 = 5;
+	TIM3->CCR1 = 80;
+	TIM3->CCR2 = 80;
+	TIM3->CR1 |= 1;
 	
-	NVIC_EnableIRQ(15);
-	NVIC_SetPriority(15,1);
 	
-	GPIOC->ODR |= (1<<8);
-	GPIOC->ODR &= ~(1<<9);
-	GPIOC->ODR &= ~(1<<6);
-	GPIOC->ODR |= (1<<7);
+	// Enable the interrupt
+//	NVIC_EnableIRQ(15);
+//	NVIC_SetPriority(15,1);
+	
+	// Turn on the green LED
+//	GPIOC->ODR |= (1<<8);
+//	GPIOC->ODR &= ~(1<<9);
+
 	
   while (1)
   {
@@ -147,10 +155,11 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 void TIM2_IRQHandler(void)
 {
-	// toggle the leds
+	// Toggle the leds
 	GPIOC->ODR ^= (1<<8);
 	GPIOC->ODR ^= (1<<9);
 	
+	// Disable the flag
 	TIM2->SR &= ~(1<<0);
 }
 /* USER CODE END 4 */
